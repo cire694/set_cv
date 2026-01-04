@@ -242,7 +242,7 @@ if __name__ == '__main__':
     #set up training
     train_loader = DataLoader(
         dataset = train_data, 
-        batch_size=512,
+        batch_size=128,
         shuffle=True,     #
         num_workers = 8,  #number of subproccesses for data loading
         pin_memory=True,  #faster GPU transfer
@@ -251,7 +251,7 @@ if __name__ == '__main__':
 
     test_loader = DataLoader(
         dataset = test_data, 
-        batch_size=512,
+        batch_size=128,
         shuffle=False,     #
         num_workers = 8,  #number of subproccesses for data loading
         pin_memory=True,  #faster GPU transfer
@@ -259,8 +259,8 @@ if __name__ == '__main__':
     )
 
     model = SetCardDetector().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr = 1e-3)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3)
+    optimizer = torch.optim.Adam(model.parameters(), lr = 5e-4)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=1e-6)
     loss_fn = nn.CrossEntropyLoss()
     
 
