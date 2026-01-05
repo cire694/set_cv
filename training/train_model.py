@@ -101,13 +101,12 @@ class SetCardDetector(nn.Module):
     def forward(self, x):
         raw = self.layers(x)
 
-        output = {}
-        output["color"] = self.color_head(raw)# returns a raw logit. nn.CrossEntropyLoss() applies softmax internally
-        output["number"] = self.number_head(raw)
-        output["shape"] = self.shape_head(raw)
-        output["fill"] = self.fill_head(raw)
-
-        return output
+        return {
+            "color": self.color_head(raw),
+            "number": self.number_head(raw),
+            "shape": self.shape_head(raw),
+            "fill": self.fill_head(raw)
+        }
 
 
         
@@ -230,7 +229,7 @@ if __name__ == '__main__':
     ])
 
     #set up the dataset
-    full_dataset = SetCardDataset(root="./data/", transform = None)
+    full_dataset = SetCardDataset(root="../data/", transform = None)
 
     train_size = int(len(full_dataset) * 0.7)
     test_size = len(full_dataset) - train_size
@@ -279,7 +278,7 @@ if __name__ == '__main__':
         train_loss_dict = train(model, train_loader, optimizer, loss_fn, device)
         
         eval_loss_dict, accuracy = eval(model, test_loader, loss_fn, device)
-        scheduler.step(accuracy)
+        scheduler.step()
 
         train_loss_dict = {key: val / len(train_loader) for (key, val) in train_loss_dict.items()}
         eval_loss_dict = {key: val / len(test_loader) for (key, val) in eval_loss_dict.items()}
