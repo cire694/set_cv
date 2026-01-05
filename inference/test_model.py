@@ -51,7 +51,7 @@ model.eval()
 labels_map = {
     "color": ["Red", "Green", "Purple"],
     "number": ["1", "2", "3"], 
-    "shape": ["Diamond", "Squiggle", "Oval"], 
+    "shape": ["Diamond", "Oval", "Squiggle"], 
     "fill": ["Empty", "Striped", "Solid"] #very strange, order should be swapped
 }
 
@@ -70,10 +70,12 @@ def predict(image_path):
     
     #output returns a dictionary mapping attribute to a 4x1 logit. 
     results = {}
+    raw = ""
     for attr, logits in outputs.items(): 
         idx = torch.argmax(logits, dim=1).item()
         results[attr] = labels_map[attr][idx]
+        raw += str(idx + 1)
     
-    return results
+    return results, raw
 
     

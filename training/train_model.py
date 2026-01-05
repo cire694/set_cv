@@ -229,7 +229,7 @@ if __name__ == '__main__':
     ])
 
     #set up the dataset
-    full_dataset = SetCardDataset(root="../data/", transform = None)
+    full_dataset = SetCardDataset(root="./data/", transform = None)
 
     train_size = int(len(full_dataset) * 0.7)
     test_size = len(full_dataset) - train_size
