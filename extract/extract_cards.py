@@ -2,7 +2,10 @@ import cv2 as cv
 import numpy as np
 import os
 from PIL import Image
-from predict import predict_from_opencv
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from inference.predict import predict_from_opencv
 
 # Preprocessing: 
 # 1) remove color data to simplify edge math
@@ -31,7 +34,7 @@ from predict import predict_from_opencv
 #   below minVal are non-edges. 
 #   Anything in-between is judged based on their connectivity, aka if they are connected to pixels we know are edges. 
 
-def find_card_contours(path):
+def find_card_contours(path, get_contours = False):
 
     #preprocessing
     img = cv.imread(path) #all our edge detection algorithms use grayscale
@@ -41,13 +44,14 @@ def find_card_contours(path):
     blurred = cv.GaussianBlur(gray, (3, 3), 0) #kernel (3, 3). If SD in X (and Y) is both zero -> SD is computed from kernel width and height
     edges = cv.Canny(blurred, 100, 200)
     
-    kernel = cv.getStructuringElement(cv.MORPH_RECT, size=(3, 3))
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, ksize=(3, 3))
     closed_edges = cv.morphologyEx(edges, cv.MORPH_CLOSE, kernel)
 
     #detection
     contours, _ = cv.findContours(closed_edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)#external retreival mode, no nesting of contours. chain_approx_simple means only store boundary points, not intermediate
     
-
+    if get_contours: 
+        all_card_contours = []
     cards = []
     for cnt in contours: 
         area = cv.contourArea(cnt)
@@ -58,7 +62,6 @@ def find_card_contours(path):
             #input, epsilon, closed curve or not
             #epsilon: if line deviates by less than 0.02*perimeter, treat it as straight line. 
             approx = cv.approxPolyDP(cnt, 0.02 * perimeter, True) 
-            
             if len(approx) != 4:
                 continue
             
@@ -78,6 +81,10 @@ def find_card_contours(path):
             warped = cv.warpPerspective(img, M, (width, height))
 
             cards.append(warped)
+            if get_contours:
+                all_card_contours.append(approx)
+    if get_contours: 
+        return cards, all_card_contours
     return cards
 
 
@@ -98,15 +105,13 @@ def reorder(pts):
     rect[2] = pts[np.argmax(s)]
 
     d = np.diff(pts, axis=1) #computes y-x
-    rect[1] = pts[np.argmin(d)]
-    rect[3] = pts[np.argmax(d)]
+    rect[1] = pts[np.argmax(d)]
+    rect[3] = pts[np.argmin(d)]
     return rect
 
 
 def get_all_cards(path): 
     return [predict_from_opencv(card_img) for card_img in find_card_contours(path)]
 
-
-
-
-
+def get_card_contours(path):
+    return find_card_contours(path, get_contours=True)[1]
