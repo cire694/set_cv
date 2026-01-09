@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 from PIL import Image
+import cv2 as cv
 
 class SetCardDetector(nn.Module):
 
@@ -63,6 +64,32 @@ def predict(image_path):
     ])
 
     img = Image.open(image_path).convert('RGB')
+    img_tensor = transform(img).unsqueeze(0).to(device) #add batch dimension
+
+    with torch.no_grad(): 
+        outputs = model(img_tensor)
+    
+    #output returns a dictionary mapping attribute to a 4x1 logit. 
+    results = {}
+    raw = ""
+    for attr, logits in outputs.items(): 
+        idx = torch.argmax(logits, dim=1).item()
+        results[attr] = labels_map[attr][idx]
+        raw += str(idx + 1)
+    
+    return results, raw
+
+def predict_from_opencv(cv_warped_image): 
+    #convert opencv (BGR) to PIL (RGB)
+    img_rgb = cv.cvtColor(cv_warped_image, cv.COLOR_BGR2RGB) #
+    img = Image.fromarray(img_rgb) #numpy array. (H, W, C)
+
+    transform = transforms.Compose([
+        transforms.Resize((150, 200)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+
     img_tensor = transform(img).unsqueeze(0).to(device) #add batch dimension
 
     with torch.no_grad(): 
